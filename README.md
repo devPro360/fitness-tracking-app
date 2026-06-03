@@ -1,6 +1,16 @@
-# Fitness Tracking App
+## Fitness Tracking Platform
 
-Aplicación full-stack para seguimiento de entrenamiento físico: registro de usuarios, ejercicios, plantillas de rutina, sesiones de entrenamiento y récords personales.
+Plataforma full-stack para seguimiento de entrenamiento físico que permite a los usuarios registrar ejercicios, crear rutinas personalizadas, realizar seguimiento de sesiones y analizar su progreso a lo largo del tiempo.
+
+## Problema que resuelve
+
+La mayoría de apps de entrenamiento se centran solo en registrar ejercicios, pero no ofrecen una visión clara del progreso real del usuario.
+
+Esta aplicación se centra en:
+
+- Seguimiento estructurado de entrenamientos
+- Análisis de progreso y récords personales
+- Gestión flexible de rutinas y sesiones
 
 ## Tech Stack
 
@@ -18,6 +28,16 @@ fitness-tracking-app/
 |- docs/         # Documentación técnica y decisiones (ADRs)
 `- AGENTS.md     # Guía del proyecto para agentes
 ```
+
+## Funcionalidades principales
+
+- Autenticación JWT (access + refresh tokens)
+- Gestión de usuarios
+- Creación y gestión de ejercicios
+- Plantillas de rutinas
+- Registro de sesiones de entrenamiento
+- Seguimiento de récords personales
+- Sistema de estadísticas
 
 ## Requisitos previos
 
