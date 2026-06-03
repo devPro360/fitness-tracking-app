@@ -155,6 +155,7 @@ export default function ActiveSession({
   } | null>(null);
   const [expandedNotes, setExpandedNotes] = useState<Record<string, boolean>>({});
   const [exerciseFlash, setExerciseFlash] = useState(false);
+  const [showFinishConfirm, setShowFinishConfirm] = useState(false);
 
   const cardRef = useRef<HTMLDivElement | null>(null);
   const editableSetsRef = useRef(editableSets);
@@ -185,6 +186,11 @@ export default function ActiveSession({
   const totalCompletedExercises = editableSets.filter((sets) =>
     sets.every((set) => set.isCompleted)
   ).length;
+  const pendingSetCount = editableSets.reduce(
+    (total, sets) => total + sets.filter((set) => !set.isCompleted).length,
+    0
+  );
+  const allSetsCompleted = pendingSetCount === 0;
 
   const isExerciseCompleted = currentSets.every((set) => set.isCompleted);
   const activeSet = currentSets[activeSetIdx];
@@ -452,12 +458,19 @@ export default function ActiveSession({
     setSetPulse(true);
     setTimeout(() => setSetPulse(false), 250);
 
-    updateSetField(currentIdx, activeSetIdx, 'isCompleted', true);
-
-    const currentSetsSnapshot = editableSetsRef.current[currentIdx];
-    const nextPendingInExercise = currentSetsSnapshot.findIndex(
-      (set, index) => !set.isCompleted && index !== activeSetIdx
+    const updatedSets = editableSetsRef.current.map((sets, exerciseIdx) =>
+      exerciseIdx === currentIdx
+        ? sets.map((set, setIdx) =>
+            setIdx === activeSetIdx ? { ...set, isCompleted: true } : set
+          )
+        : sets
     );
+
+    setEditableSets(updatedSets);
+    editableSetsRef.current = updatedSets;
+
+    const currentSetsSnapshot = updatedSets[currentIdx];
+    const nextPendingInExercise = currentSetsSnapshot.findIndex((set) => !set.isCompleted);
 
     if (nextPendingInExercise >= 0) {
       setTimeout(() => {
@@ -466,19 +479,38 @@ export default function ActiveSession({
       return;
     }
 
-    const isLastExercise = currentIdx === session.exercises.length - 1;
-    if (isLastExercise) {
+    const allSetsCompletedAfterCurrent = updatedSets.every((sets) =>
+      sets.every((set) => set.isCompleted)
+    );
+
+    if (allSetsCompletedAfterCurrent) {
       setTimeout(() => {
-        onComplete(editableSetsRef.current);
+        onComplete(updatedSets);
       }, 450);
+      return;
+    }
+
+    const nextExerciseWithPendingIdx = updatedSets.findIndex((sets) =>
+      sets.some((set) => !set.isCompleted)
+    );
+
+    if (nextExerciseWithPendingIdx === -1 || nextExerciseWithPendingIdx === currentIdx) {
       return;
     }
 
     setExerciseFlash(true);
     setTimeout(() => {
       setExerciseFlash(false);
-      goToExercise(currentIdx + 1, 1);
+      goToExercise(
+        nextExerciseWithPendingIdx,
+        nextExerciseWithPendingIdx > currentIdx ? 1 : -1
+      );
     }, 620);
+  };
+
+  const finishSessionNow = () => {
+    setShowFinishConfirm(false);
+    onComplete(editableSetsRef.current);
   };
 
   const parseNumericInput = (raw: string, integer: boolean): number | undefined => {
@@ -574,6 +606,37 @@ export default function ActiveSession({
                 className="w-full bg-transparent border border-border text-muted-foreground font-barlow text-[13px] tracking-[3px] py-4 cursor-pointer hover:bg-muted/20 transition-colors"
               >
                 CANCELAR
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showFinishConfirm && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+          <div className="mx-8 w-full max-w-sm border border-border bg-background p-8 space-y-6">
+            <div>
+              <div className="font-bebas text-2xl tracking-[2px] text-foreground mb-2">
+                FINALIZAR SESION
+              </div>
+              <p className="font-barlow text-sm text-muted-foreground">
+                {pendingSetCount > 0
+                  ? `Quedan ${pendingSetCount} sets sin completar. Puedes finalizar igualmente.`
+                  : 'Todos los sets estan completos. Listo para finalizar.'}
+              </p>
+            </div>
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={finishSessionNow}
+                className="w-full bg-primary border-none text-black font-bebas text-[18px] tracking-[3px] py-4 cursor-pointer transition-colors hover:bg-primary/90"
+              >
+                {pendingSetCount > 0 ? 'FINALIZAR DE TODAS FORMAS' : 'FINALIZAR SESION'}
+              </button>
+              <button
+                onClick={() => setShowFinishConfirm(false)}
+                className="w-full bg-transparent border border-border text-muted-foreground font-barlow text-[13px] tracking-[3px] py-4 cursor-pointer hover:bg-muted/20 transition-colors"
+              >
+                SEGUIR ENTRENANDO
               </button>
             </div>
           </div>
@@ -912,6 +975,15 @@ export default function ActiveSession({
             : activeSet?.isCompleted
               ? 'SET COMPLETADO'
               : 'COMPLETAR SET'}
+        </button>
+      </div>
+
+      <div className="px-8 pb-4">
+        <button
+          onClick={() => setShowFinishConfirm(true)}
+          className="w-full bg-transparent border border-border text-muted-foreground font-barlow text-[12px] tracking-[3px] py-3 cursor-pointer hover:bg-muted/20 transition-colors"
+        >
+          {allSetsCompleted ? 'FINALIZAR SESION' : 'FINALIZAR AHORA'}
         </button>
       </div>
 
