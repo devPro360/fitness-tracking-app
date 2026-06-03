@@ -503,7 +503,7 @@ export default function StatsPage() {
                   onClick={() => setShowAllRecent((prev) => !prev)}
                   className="uppercase tracking-[2px] text-xs font-barlow"
                 >
-                  {showAllRecent ? 'Ver menos' : `Ver mas (${recentSessions.length - 3})`}
+                  {showAllRecent ? 'Ver menos' : `Ver más (${recentSessions.length - 3})`}
                 </Button>
               ) : null}
             </>

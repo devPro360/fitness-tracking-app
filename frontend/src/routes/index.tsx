@@ -18,6 +18,7 @@ import EditTemplatePage from "@/features/workouts/pages/EditTemplatePage";
 import StartSessionPage from '@/features/workouts/pages/StartSessionPage';
 import SessionDetailPage from '@/features/workouts/pages/SessionDetailPage';
 import TemplateDetailPage from '@/features/workouts/pages/TemplateDetailPage';
+import EditSessionPage from '@/features/workouts/pages/EditSessionPage';
 import ExercisesPage from '@/features/exercises/pages/ExercisesPage';
 import ProfilePage from '@/features/profile/pages/ProfilePage';
 import StatsPage from '@/features/stats/pages/StatsPage';
@@ -76,6 +77,10 @@ export const router = createBrowserRouter([
               {
                 path: 'workouts/sessions/:id',
                 element: <SessionDetailPage />
+              },
+              {
+                path: 'workouts/sessions/:id/edit',
+                element: <EditSessionPage />
               },
               {
                 path: 'workouts/templates/:id',

@@ -95,14 +95,6 @@ const getDeltaClasses = (delta: SetDelta) => {
     : 'text-red-500 border-red-500/30';
 };
 
-const getSetVolume = (set: EditableSet | WorkoutSessionSet | undefined) => {
-  if (!set || set.reps === undefined || set.weight === undefined) {
-    return undefined;
-  }
-
-  return set.reps * set.weight;
-};
-
 const getSetSummary = (set: EditableSet | WorkoutSessionSet) => {
   const parts: string[] = [];
 
@@ -154,7 +146,6 @@ export default function ActiveSession({
     setIdx: number;
   } | null>(null);
   const [expandedNotes, setExpandedNotes] = useState<Record<string, boolean>>({});
-  const [exerciseFlash, setExerciseFlash] = useState(false);
   const [showFinishConfirm, setShowFinishConfirm] = useState(false);
 
   const cardRef = useRef<HTMLDivElement | null>(null);
@@ -231,12 +222,12 @@ export default function ActiveSession({
     activeSet?.durationSeconds,
     activePreviousSet?.durationSeconds
   );
-  const volumeDelta = getSetDelta(getSetVolume(activeSet), getSetVolume(activePreviousSet));
+  const restDelta = getSetDelta(activeSet?.restSeconds, activePreviousSet?.restSeconds);
 
   const repsDeltaLabel = formatSignedDelta(repsDelta, 'reps');
   const weightDeltaLabel = formatSignedDelta(weightDelta, 'kg');
   const durationDeltaLabel = formatSignedDelta(durationDelta, 'seg');
-  const volumeDeltaLabel = formatSignedDelta(volumeDelta, 'kg vol');
+  const restDeltaLabel = formatSignedDelta(restDelta, 'seg desc');
 
   const updateSetField = (
     exerciseIdx: number,
@@ -498,14 +489,10 @@ export default function ActiveSession({
       return;
     }
 
-    setExerciseFlash(true);
-    setTimeout(() => {
-      setExerciseFlash(false);
-      goToExercise(
-        nextExerciseWithPendingIdx,
-        nextExerciseWithPendingIdx > currentIdx ? 1 : -1
-      );
-    }, 620);
+    goToExercise(
+      nextExerciseWithPendingIdx,
+      nextExerciseWithPendingIdx > currentIdx ? 1 : -1
+    );
   };
 
   const finishSessionNow = () => {
@@ -551,10 +538,10 @@ export default function ActiveSession({
           <div className="mx-8 w-full max-w-sm border border-border bg-background p-8 space-y-6">
             <div>
               <div className="font-bebas text-2xl tracking-[2px] text-foreground mb-2">
-                CANCELAR SESION
+                CANCELAR SESIÓN
               </div>
               <p className="font-barlow text-sm text-muted-foreground">
-                Se perdera todo el progreso de esta sesion. Esta accion no se puede
+                Se perderá todo el progreso de esta sesión. Esta acción no se puede
                 deshacer.
               </p>
             </div>
@@ -567,7 +554,7 @@ export default function ActiveSession({
                 disabled={isCancelling}
                 className="w-full bg-destructive border-none text-destructive-foreground font-bebas text-[18px] tracking-[3px] py-4 cursor-pointer transition-colors hover:bg-destructive/90 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isCancelling ? 'CANCELANDO...' : 'CANCELAR SESION'}
+                {isCancelling ? 'CANCELANDO...' : 'CANCELAR SESIÓN'}
               </button>
               <button
                 onClick={() => setShowCancelConfirm(false)}
@@ -614,24 +601,24 @@ export default function ActiveSession({
 
       {showFinishConfirm && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-          <div className="mx-8 w-full max-w-sm border border-border bg-background p-8 space-y-6">
+      <div className="mx-8 w-full max-w-sm border border-border bg-background p-8 space-y-6">
             <div>
               <div className="font-bebas text-2xl tracking-[2px] text-foreground mb-2">
-                FINALIZAR SESION
+                COMPLETAR SESIÓN
               </div>
               <p className="font-barlow text-sm text-muted-foreground">
                 {pendingSetCount > 0
-                  ? `Quedan ${pendingSetCount} sets sin completar. Puedes finalizar igualmente.`
-                  : 'Todos los sets estan completos. Listo para finalizar.'}
+                  ? `Quedan ${pendingSetCount} sets sin completar. Si continúas, la sesión se guardará como completada con el progreso actual.`
+                  : 'Todos los sets están completos. ¿Deseas guardar y completar la sesión?'}
               </p>
             </div>
             <div className="flex flex-col gap-3">
-              <button
-                onClick={finishSessionNow}
-                className="w-full bg-primary border-none text-black font-bebas text-[18px] tracking-[3px] py-4 cursor-pointer transition-colors hover:bg-primary/90"
-              >
-                {pendingSetCount > 0 ? 'FINALIZAR DE TODAS FORMAS' : 'FINALIZAR SESION'}
-              </button>
+                <button
+                  onClick={finishSessionNow}
+                  className="w-full bg-primary border-none text-black font-bebas text-[18px] tracking-[3px] py-4 cursor-pointer transition-colors hover:bg-primary/90"
+                >
+                  COMPLETAR Y GUARDAR
+                </button>
               <button
                 onClick={() => setShowFinishConfirm(false)}
                 className="w-full bg-transparent border border-border text-muted-foreground font-barlow text-[13px] tracking-[3px] py-4 cursor-pointer hover:bg-muted/20 transition-colors"
@@ -714,12 +701,6 @@ export default function ActiveSession({
             />
           ))}
         </div>
-
-        {exerciseFlash && (
-          <div className="mb-4 border border-primary/30 bg-primary/10 px-3 py-2 text-center font-barlow text-[11px] tracking-[2px] uppercase text-primary">
-            Ejercicio completado
-          </div>
-        )}
 
         {activeSet && (
           <div
@@ -866,7 +847,7 @@ export default function ActiveSession({
                   <div className="text-xs font-barlow text-muted-foreground">
                     Anterior (set {activePreviousSet.setNumber}): {getSetSummary(activePreviousSet)}
                   </div>
-                  {(repsDeltaLabel || weightDeltaLabel || durationDeltaLabel || volumeDeltaLabel) && (
+                  {(repsDeltaLabel || weightDeltaLabel || durationDeltaLabel || restDeltaLabel) && (
                     <div className="flex items-center gap-2 flex-wrap">
                       {repsDeltaLabel && (
                         <span
@@ -889,11 +870,11 @@ export default function ActiveSession({
                           {durationDeltaLabel}
                         </span>
                       )}
-                      {volumeDeltaLabel && (
+                      {restDeltaLabel && (
                         <span
-                          className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-barlow uppercase tracking-[2px] ${getDeltaClasses(volumeDelta)}`}
+                          className="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-barlow uppercase tracking-[2px] text-muted-foreground border-border"
                         >
-                          {volumeDeltaLabel}
+                          {restDeltaLabel}
                         </span>
                       )}
                     </div>
@@ -978,12 +959,12 @@ export default function ActiveSession({
         </button>
       </div>
 
-      <div className="px-8 pb-4">
+        <div className="px-8 pb-4">
         <button
           onClick={() => setShowFinishConfirm(true)}
           className="w-full bg-transparent border border-border text-muted-foreground font-barlow text-[12px] tracking-[3px] py-3 cursor-pointer hover:bg-muted/20 transition-colors"
         >
-          {allSetsCompleted ? 'FINALIZAR SESION' : 'FINALIZAR AHORA'}
+          {allSetsCompleted ? 'COMPLETAR SESIÓN' : 'COMPLETAR SESIÓN'}
         </button>
       </div>
 
