@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useWorkoutSession, useUpdateSession } from '../hooks/useWorkoutSessions';
-import type { CreateWorkoutSessionData, WorkoutSessionWithExercises } from '@/types';
+import type { CreateWorkoutSessionData } from '@/types';
 
 export default function EditSessionPage() {
   const { id } = useParams<{ id: string }>();
